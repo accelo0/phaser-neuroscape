@@ -20,8 +20,6 @@ import { GameData } from "./GameData";
 //questo evento viene lanciato quando la pagina è stata caricata
 //e tutti gli elementi della pagina sono disponibili
 window.addEventListener("load", () => {
-
-
   //creiamo un oggetto di configurazione per il gioco
   //questo oggetto viene passato al costruttore di Phaser.Game
   // e contiene i parametri di configurazione del gioco
@@ -42,11 +40,11 @@ window.addEventListener("load", () => {
       Preloader,
       Intro,
       GamePlay,
-      GameOver, 
-      Stem, 
+      GameOver,
+      Stem,
       Livello1,
 
-      testLivello1
+      testLivello1,
     ],
     physics: {
       default: "arcade",
@@ -61,12 +59,11 @@ window.addEventListener("load", () => {
       keyboard: true,
     },
     render: {
-      pixelArt: false,
+      pixelArt: true,
       antialias: true,
     },
   };
 
   //inizializziamo il gioco passando la configurazione
   const game = new Phaser.Game(config);
-
 });
