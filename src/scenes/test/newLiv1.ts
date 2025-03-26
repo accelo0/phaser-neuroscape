@@ -1,25 +1,22 @@
 import Phaser from "phaser";
 
-enum playerState {
-  IDLE,
-  WALKING,
-  RUNNING,
-  JUMPING,
-}
-
 import Player from "../player/Player";
 
 export default class testLivello1 extends Phaser.Scene {
-  //private _liv1BG: Phaser.GameObjects.Image;
   private _terreni: Phaser.Physics.Arcade.StaticGroup;
   private _piattaforme: Phaser.Physics.Arcade.StaticGroup;
   private _player: Phaser.Physics.Arcade.Sprite;
+
   private _cursors: Phaser.Types.Input.Keyboard.CursorKeys;
-  private _testiPiattaforme: Phaser.GameObjects.Group;
 
   private _key: Phaser.Physics.Arcade.Sprite;
   private _keyCounter: number = 0;
   private _keyYCoo: number;
+
+  private _portaText: Phaser.GameObjects.Text;
+  private _porta: Phaser.Physics.Arcade.Sprite;
+
+  private _activeCollider: Phaser.Physics.Arcade.Collider;
 
   constructor() {
     super({ key: "testLivello1" });
@@ -30,8 +27,6 @@ export default class testLivello1 extends Phaser.Scene {
       "mappa",
       "assets/images/livello1/livello1map.json"
     );
-    //this.load.image('tileset', 'assets/tileset.png');
-    //this.load.image('piattaforma', 'assets/piattaforma.png'); // Texture per piattaforme
   }
 
   creaTerreni(): void {
@@ -78,7 +73,13 @@ export default class testLivello1 extends Phaser.Scene {
     // Carichiamo gli oggetti di collisione dal JSON
     const piattaformeObjects = map.getObjectLayer("Collisioni").objects;
     piattaformeObjects.forEach((obj) => {
-      this._piattaforme.create(obj.x, obj.y, "piattaforma");
+      const platform = this._piattaforme.create(obj.x, obj.y, "piattaforma");
+      (platform.body as Phaser.Physics.Arcade.StaticBody).checkCollision.down =
+        false;
+      (platform.body as Phaser.Physics.Arcade.StaticBody).checkCollision.left =
+        false;
+      (platform.body as Phaser.Physics.Arcade.StaticBody).checkCollision.right =
+        false;
     });
   }
 
@@ -99,6 +100,26 @@ export default class testLivello1 extends Phaser.Scene {
     this._key.play("key-anim");
   }
 
+  setupPorta(): void {
+    const terreno2 =
+      this._terreni.getChildren()[1] as Phaser.Physics.Arcade.Sprite;
+    this._porta = this.physics.add
+      .sprite(1100, terreno2.y - 95, "porta")
+      .setScale(0.6);
+    this.physics.add.collider(this._porta, this._terreni);
+
+    this._portaText = this.add
+      .text(this._porta.x - 85, this._porta.y - 120, "Premi 'A'\nper entrare", {
+        fontSize: "13px",
+        fontFamily: "PressStart2P",
+        color: "#ffffff",
+        backgroundColor: "#000000",
+        padding: { x: 10, y: 5 },
+      })
+      //.setOrigin(0.5)
+      .setVisible(false);
+  }
+
   create() {
     console.log("livelliDi1test");
     this.cameras.main.setBackgroundColor("#000000");
@@ -109,8 +130,26 @@ export default class testLivello1 extends Phaser.Scene {
     );
 
     this.creaTerreni();
-    this.creaPlayer();
+    this.setupPorta();
     this.creaPiattaforme();
+    this.creaPlayer();
+
+    // Interazione tra player e porta
+    this.physics.add.overlap(
+      this._player,
+      this._porta,
+      () => {
+        if (this._keyCounter == 1) this._portaText.setVisible(true);
+        else if (this._keyCounter == 0) {
+          this._portaText.setText(
+            "... Per aprire\nquesta porta\nserve una chiave!"
+          );
+          this._portaText.setVisible(true);
+        }
+      },
+      null,
+      this
+    );
 
     //animazione della chiave
     this.anims.create({
@@ -141,7 +180,7 @@ export default class testLivello1 extends Phaser.Scene {
       this._key,
       () => {
         this._key.destroy();
-        this.events.emit("key-picked", 1);
+        this.events.emit("key-event", 1);
         this._keyCounter++;
       },
       null,
@@ -149,7 +188,7 @@ export default class testLivello1 extends Phaser.Scene {
     );
 
     // Abilitiamo le collisioni di player e chiave, con piattaforme e terreni
-    this.physics.add.collider(
+    this._activeCollider = this.physics.add.collider(
       [this._player, this._key],
       [this._terreni, this._piattaforme]
     );
@@ -188,6 +227,50 @@ export default class testLivello1 extends Phaser.Scene {
     if (this._cursors.up.isDown && this._player.body.blocked.down) {
       this._player.setVelocityY(-400);
     }
-    // this.physics.add.overlap(_player, , collideCallback, processCallback, callbackContext);
+
+    const secondFloor =
+      this._terreni.getChildren()[1] as Phaser.Physics.Arcade.Sprite;
+    //permettere al player di passare attraverso il secondo piano
+    // Controlliamo se il player è sopra il secondo pavimento
+    if (
+      this._cursors.down.isDown &&
+      this._player.body.blocked.down &&
+      this._player.y < secondFloor.y
+    ) {
+      console.log("sopra e down");
+      // Disattiva temporaneamente il collider
+      this._activeCollider.active = false;
+
+      // Riattiva il collider dopo un breve delay
+      this.time.delayedCall(500, () => {
+        this._activeCollider.active = true;
+      });
+
+      // Dai una piccola spinta verso il basso al player
+      this._player.setVelocityY(100);
+    }
+
+    if (
+      Phaser.Math.Distance.Between(
+        this._player.x,
+        this._player.y,
+        this._porta.x,
+        this._porta.y
+      ) > 50
+    ) {
+      this._portaText.setVisible(false);
+    }
+
+    if (
+      this._portaText.visible &&
+      this.input.keyboard.checkDown(this.input.keyboard.addKey("A"), 250) &&
+      this._keyCounter == 1
+    ) {
+      console.log("porta aperta");
+      this.cameras.main.flash(1000, 255, 255, 255);
+      this._keyCounter--;
+      this.events.emit("key-event", -1);
+      //this.scene.start("nextLevelScene"); // Cambia con la tua prossima scena
+    }
   }
 }
