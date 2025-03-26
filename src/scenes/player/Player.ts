@@ -10,10 +10,6 @@ export default class Player
   private _body: Phaser.Physics.Arcade.Body;
   private _cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private _velocity: number = 200;
-  private _w: Phaser.Input.Keyboard.Key;
-  private _a: Phaser.Input.Keyboard.Key;
-  private _s: Phaser.Input.Keyboard.Key;
-  private _d: Phaser.Input.Keyboard.Key;
   private _animations: Array<{
     key: string;
     frames: Array<number>;
@@ -68,20 +64,8 @@ export default class Player
     this.setDepth(11);
     this._scene.add.existing(this);
 
-    this._body.setSize(24, 30).setOffset(3, 20);
-
-    this._w = this._scene.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.W
-    );
-    this._a = this._scene.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.A
-    );
-    this._s = this._scene.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.S
-    );
-    this._d = this._scene.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.D
-    );
+    this._body.setSize(12, 23);
+    this._body.setGravityY(100);
   }
 
   createAnimations() {
@@ -103,49 +87,32 @@ export default class Player
   }
 
   update(time: number, delta: number) {
-    //this._scene.updateValues(this.x, this.y);
+    this._body.setVelocityX(0);
 
-    this.setDepth(this.y);
-    //se il il cursore sinistro è premuto
-    if (this._cursors.left.isDown || this._a.isDown) {
-      //gira il PLAYER nella posizione iniziale, quella definina nello spritesheet
-      this.setFlipX(false);
-      //effettual il play dell'animazione
-      this.anims.play("move", true);
-      //setta la velocità x in modo da far muovere il player
-      this._body.setVelocityX(-this._velocity);
-    }
-
-    //se il il cursore destro è premuto
-    if (this._cursors.right.isDown || this._d.isDown) {
-      //gira il PLAYER in direzione opposta da quella definina nello spritesheet
-      this.setFlipX(true);
-      //effettual il play dell'animazione
-      this.anims.play("move", true);
-      //setta la velocità x in modo da far muovere il player
-      this._body.setVelocityX(this._velocity);
-    }
-
-    //se il il cursore in alto è premuto
-    if ((this._cursors.up.isDown || this._w.isDown) && this._body.onFloor()) {
-      //setta la velocità x in modo da far muovere il player
-      this._body.setVelocityY(-400);
-    }
-
-    if (
-      !this._cursors.left.isDown &&
-      !this._cursors.right.isDown &&
-      !this._cursors.up.isDown &&
-      !this._cursors.down.isDown &&
-      !this._a.isDown &&
-      !this._d.isDown &&
-      !this._w.isDown &&
-      !this._s.isDown
-    ) {
-      //setta la velocità x a 0 in modo da far fermare il PLAYER
-      this._body.setVelocityX(0);
-      //effettual il play dell'animazione
+    if (this._cursors.right.isDown) {
+      this._body.setVelocityX(200);
+      if (!this._body.touching.down) {
+        this.anims.play("player-jumping-toRight", true);
+      } else if (this._body.blocked.down) {
+        this.anims.play("player-walking-toRight", true);
+      }
+    } else if (this._cursors.left.isDown) {
+      this._body.setVelocityX(-200);
+      if (!this._body.touching.down) {
+        this.anims.play("player-jumping-toLeft", true);
+      } else if (this._body.blocked.down) {
+        this.anims.play("player-walking-toLeft", true);
+      }
+    } else {
       this.anims.play("idle", true);
     }
+
+    if (this._cursors.up.isDown && this._body.blocked.down) {
+      this._body.setVelocityY(-400);
+    }
+  }
+
+  public getBody(): Phaser.Physics.Arcade.Body {
+    return this._body;
   }
 }

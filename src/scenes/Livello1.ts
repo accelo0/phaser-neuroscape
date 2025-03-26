@@ -317,5 +317,8 @@ export default class Livello1 extends Phaser.Scene {
       this.events.emit("key-event", -1);
       //this.scene.start("nextLevelScene"); // Cambia con la tua prossima scena
     }
+
+    this.scene.stop("Livello1");
+    this.scene.start("testLivello1");
   }
 }
