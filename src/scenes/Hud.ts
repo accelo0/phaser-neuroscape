@@ -19,7 +19,7 @@ export default class Hud extends Phaser.Scene {
 
   //questa funzione riceve 1 o -1 a seconda se la chiave è stata raccolta o utilzzata
   keyPicked(value: number): void {
-    console.log("key picked");
+    console.log("key picked HUD");
     this._keyCounter += value;
     this._keyBonusText.setText("x" + this._keyCounter);
   }

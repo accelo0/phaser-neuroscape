@@ -71,6 +71,7 @@ export default class Intro extends Phaser.Scene {
       "pointerdown",
       () => {
         this.scene.stop("Intro");
+        //this.scene.start("Livello1");
         this.scene.start("Livello1");
         //faccio partire la scena HUD
         this.scene.start("Hud");

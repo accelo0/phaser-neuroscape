@@ -1,9 +1,11 @@
 import Phaser from "phaser";
 
+import Player from "./player/Player";
+
 export default class Livello1 extends Phaser.Scene {
   private _terreni: Phaser.Physics.Arcade.StaticGroup;
   private _piattaforme: Phaser.Physics.Arcade.StaticGroup;
-  private _player: Phaser.Physics.Arcade.Sprite;
+  private _player: Player; // Cambiato il tipo
 
   private _cursors: Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -15,44 +17,6 @@ export default class Livello1 extends Phaser.Scene {
   private _porta: Phaser.Physics.Arcade.Sprite;
 
   private _activeCollider: Phaser.Physics.Arcade.Collider;
-
-  private _animations: Array<{
-    key: string;
-    frames: Array<number>;
-    frameRate: number;
-    yoyo: boolean;
-    repeat: number;
-  }> = [
-    {
-      key: "player-walking-toRight",
-      frames: [48, 49, 50, 51, 52, 53],
-      frameRate: 10,
-      yoyo: false,
-      repeat: 1,
-    },
-    {
-      key: "player-walking-toLeft",
-      frames: [56, 57, 58, 59, 60, 61],
-      frameRate: 10,
-      yoyo: false,
-      repeat: 1,
-    },
-    {
-      key: "player-jumping-toRight",
-      frames: [21, 22, 23],
-      frameRate: 2,
-      yoyo: false,
-      repeat: 0,
-    },
-    {
-      key: "player-jumping-toLeft",
-      frames: [29, 30, 31],
-      frameRate: 2,
-      yoyo: false,
-      repeat: 0,
-    },
-    { key: "idle", frames: [0], frameRate: 5, yoyo: false, repeat: -1 },
-  ];
 
   constructor() {
     super({ key: "Livello1" });
@@ -86,29 +50,13 @@ export default class Livello1 extends Phaser.Scene {
   }
 
   creaPlayer(): void {
-    // **Creazione player con posizione corretta**
-    this._player = this.physics.add
-      .sprite(0, 700, "player")
-      .setOrigin(0.5, 0.5)
-      .setScale(3)
-      .setCollideWorldBounds(true);
-    this._player.setCollideWorldBounds(true);
-    this._player.setGravityY(100); // **Aggiunta gravità per il movimento naturale**
-
-    // Settaggio della hitbox più precisa
-    this._player.body.setSize(12, 23);
-
-    this._animations.forEach((anim) => {
-      this.anims.create({
-        key: anim.key,
-        frames: this.anims.generateFrameNumbers("player", {
-          frames: anim.frames,
-        }),
-        frameRate: anim.frameRate,
-        yoyo: anim.yoyo,
-        repeat: anim.repeat,
-      });
+    this._player = new Player({
+      scene: this,
+      x: 0,
+      y: 700,
+      key: "player",
     });
+    this._player.setScale(3);
   }
 
   creaPiattaforme(): void {
@@ -246,53 +194,23 @@ export default class Livello1 extends Phaser.Scene {
   }
 
   update() {
-    // Reset della velocità del player
-    this._player.setVelocityX(0);
-
-    // Controllo movimento
-    if (this._cursors.right.isDown) {
-      this._player.setVelocityX(200);
-
-      if (!this._player.body.touching.down) {
-        this._player.anims.play("player-jumping-toRight", true);
-      } else if (this._player.body.blocked.down) {
-        this._player.anims.play("player-walking-toRight", true);
-      }
-    } else if (this._cursors.left.isDown) {
-      this._player.setVelocityX(-200);
-
-      if (!this._player.body.touching.down) {
-        this._player.anims.play("player-jumping-toLeft", true);
-      } else if (this._player.body.blocked.down) {
-        this._player.anims.play("player-walking-toLeft", true);
-      }
-
-      //controllo del salto verso destra e sinistra
-    } else {
-      this._player.anims.play("idle", true); // Ferma l'animazione quando non si preme nulla
-    }
-
-    if (this._cursors.up.isDown && this._player.body.blocked.down) {
-      this._player.setVelocityY(-400);
-    }
+    this._player.update(0, 0);
 
     const secondFloor =
       this._terreni.getChildren()[1] as Phaser.Physics.Arcade.Sprite;
-    //permettere al player di passare attraverso il secondo piano
-    // Controlliamo se il player è sopra il secondo pavimento
+
     if (
       this._cursors.down.isDown &&
-      this._player.body.blocked.down &&
+      this._player.getBody().blocked.down &&
       this._player.y < secondFloor.y
     ) {
-      console.log("sopra e down");
-      // Disattiva temporaneamente il collider
       this._activeCollider.active = false;
 
-      // Riattiva il collider dopo un breve delay
-      this.time.delayedCall(250, () => {
+      this.time.delayedCall(500, () => {
         this._activeCollider.active = true;
       });
+
+      this._player.getBody().setVelocityY(100);
     }
 
     if (
@@ -315,10 +233,7 @@ export default class Livello1 extends Phaser.Scene {
       this.cameras.main.flash(1000, 255, 255, 255);
       this._keyCounter--;
       this.events.emit("key-event", -1);
-      //this.scene.start("nextLevelScene"); // Cambia con la tua prossima scena
+      this.scene.start("testLivello1"); // Cambia con la tua prossima scena
     }
-
-    this.scene.stop("Livello1");
-    this.scene.start("testLivello1");
   }
 }

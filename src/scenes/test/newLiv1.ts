@@ -9,14 +9,20 @@ export default class testLivello1 extends Phaser.Scene {
 
   private _cursors: Phaser.Types.Input.Keyboard.CursorKeys;
 
-  private _key: Phaser.Physics.Arcade.Sprite;
-  private _keyCounter: number = 0;
-  private _keyYCoo: number;
+  private _bluemeth: Phaser.Physics.Arcade.Sprite;
+  private _bluemethCounter: number = 0;
+  private _bluemethYCoo: number;
 
-  private _portaText: Phaser.GameObjects.Text;
-  private _porta: Phaser.Physics.Arcade.Sprite;
+  private _waltMethText: Phaser.GameObjects.Text;
+  private _waltMeth: Phaser.Physics.Arcade.Sprite;
+
+  private _useBluemethText: Phaser.GameObjects.Text;
 
   private _activeCollider: Phaser.Physics.Arcade.Collider;
+
+  private _piattaformeGruppo1: Phaser.Physics.Arcade.StaticGroup;
+  private _piattaformeGruppo2: Phaser.Physics.Arcade.StaticGroup;
+  private _switchTimer: number = 3000; // 3 seconds between switches
 
   constructor() {
     super({ key: "testLivello1" });
@@ -36,12 +42,14 @@ export default class testLivello1 extends Phaser.Scene {
     this._terreni
       .create(640, 810, "terreno")
       .setDisplaySize(1280, 10)
-      .setOrigin(0.5, 0);
+      .setOrigin(0.5, 0)
+      .setTint(0x000000);
 
     const secondFloor = this._terreni
       .create(640, 350, "terreno")
       .setDisplaySize(1280, 40)
-      .setOrigin(0.5, 1);
+      .setOrigin(0.5, 1)
+      .setTint(0x000000);
 
     // Jump-through platform
     (secondFloor.body as Phaser.Physics.Arcade.StaticBody)
@@ -60,16 +68,35 @@ export default class testLivello1 extends Phaser.Scene {
   }
 
   creaPiattaforme(): void {
-    //creo mappa importata sopra, fatta con tiled
     const map = this.make.tilemap({ key: "mappa" });
 
-    // Creiamo un gruppo statico per le piattaforme con collisioni
+    // Create two static groups for platforms
+    this._piattaformeGruppo1 = this.physics.add.staticGroup();
+    this._piattaformeGruppo2 = this.physics.add.staticGroup();
     this._piattaforme = this.physics.add.staticGroup();
 
-    // Carichiamo gli oggetti di collisione dal JSON
+    // Get all platform objects from the map
     const piattaformeObjects = map.getObjectLayer("Collisioni").objects;
-    piattaformeObjects.forEach((obj) => {
-      const platform = this._piattaforme.create(obj.x, obj.y, "piattaforma");
+
+    // Shuffle the platforms array
+    const shuffledPlatforms = [...piattaformeObjects].sort(
+      () => Math.random() - 0.5
+    );
+
+    // Calculate the midpoint
+    const midPoint = Math.floor(shuffledPlatforms.length / 2);
+
+    // Split platforms into two groups
+    const group1Platforms = shuffledPlatforms.slice(0, midPoint);
+    const group2Platforms = shuffledPlatforms.slice(midPoint);
+
+    // Create platforms for group 1
+    group1Platforms.forEach((obj) => {
+      const platform = this._piattaformeGruppo1.create(
+        obj.x,
+        obj.y,
+        "piattaforma2"
+      );
       (platform.body as Phaser.Physics.Arcade.StaticBody).checkCollision.down =
         false;
       (platform.body as Phaser.Physics.Arcade.StaticBody).checkCollision.left =
@@ -77,43 +104,111 @@ export default class testLivello1 extends Phaser.Scene {
       (platform.body as Phaser.Physics.Arcade.StaticBody).checkCollision.right =
         false;
     });
+
+    // Create platforms for group 2
+    group2Platforms.forEach((obj) => {
+      const platform = this._piattaformeGruppo2.create(
+        obj.x,
+        obj.y,
+        "piattaforma2"
+      );
+      (platform.body as Phaser.Physics.Arcade.StaticBody).checkCollision.down =
+        false;
+      (platform.body as Phaser.Physics.Arcade.StaticBody).checkCollision.left =
+        false;
+      (platform.body as Phaser.Physics.Arcade.StaticBody).checkCollision.right =
+        false;
+    });
+
+    // Initially hide group 2
+    this._piattaformeGruppo2.getChildren().forEach((platform) => {
+      (platform as Phaser.Physics.Arcade.Sprite).setVisible(false);
+      //(platform.body as Phaser.Physics.Arcade.StaticBody).enable = false;
+    });
+
+    // Set up the alternating timer
+    this.time.addEvent({
+      delay: this._switchTimer,
+      callback: this.switchPlatformGroups,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // Add both groups to the main platforms group for collision handling
+    this._piattaforme.addMultiple(this._piattaformeGruppo1.getChildren());
+    this._piattaforme.addMultiple(this._piattaformeGruppo2.getChildren());
   }
 
-  spawnChiave(): void {
-    // Seleziona una piattaforma casuale
-    const piattaformeArray = this._piattaforme.getChildren();
-    //numero casuale tra 0 e il numero di piattaforme
-    const piattaformaScelta = piattaformeArray[
-      Math.floor(Math.random() * piattaformeArray.length)
-    ] as Phaser.Physics.Arcade.Sprite; // Scegli la prima piattaforma (puoi cambiarlo)
+  private switchPlatformGroups(): void {
+    this._piattaformeGruppo1.getChildren().forEach((platform) => {
+      const isVisible = (platform as Phaser.Physics.Arcade.Sprite).visible;
+      (platform as Phaser.Physics.Arcade.Sprite).setVisible(!isVisible);
+      //(platform.body as Phaser.Physics.Arcade.StaticBody).enable = !isVisible;
+    });
 
-    // Crea la chiave sopra la piattaforma scelta
-    this._key = this.physics.add
-      .sprite(piattaformaScelta.x, piattaformaScelta.y - 50, "chiave")
-      .setGravityY(0);
+    this._piattaformeGruppo2.getChildren().forEach((platform) => {
+      const isVisible = (platform as Phaser.Physics.Arcade.Sprite).visible;
+      (platform as Phaser.Physics.Arcade.Sprite).setVisible(!isVisible);
+      //(platform.body as Phaser.Physics.Arcade.StaticBody).enable = !isVisible;
+    });
 
-    this._keyYCoo = this._key.y;
-    this._key.play("key-anim");
+    // Optional: Add a flash effect when platforms switch
+    this.cameras.main.flash(200, Math.random(), 235, 167, false);
   }
 
-  setupPorta(): void {
+  setupWaltMeth(): void {
     const terreno2 =
       this._terreni.getChildren()[1] as Phaser.Physics.Arcade.Sprite;
-    this._porta = this.physics.add
-      .sprite(1100, terreno2.y - 95, "porta")
-      .setScale(0.6);
-    this.physics.add.collider(this._porta, this._terreni);
+    this._waltMeth = this.physics.add
+      .sprite(1100, terreno2.y - 95, "waltMeth")
+      .setScale(1.8);
+    this.physics.add.collider(this._waltMeth, this._terreni);
 
-    this._portaText = this.add
-      .text(this._porta.x - 85, this._porta.y - 120, "Premi 'A'\nper entrare", {
-        fontSize: "13px",
-        fontFamily: "PressStart2P",
-        color: "#ffffff",
-        backgroundColor: "#000000",
-        padding: { x: 10, y: 5 },
-      })
+    this._waltMethText = this.add
+      .text(
+        this._waltMeth.x - 85,
+        this._waltMeth.y - 120,
+        "Premi 'A'\nper prendere\nla Bluemeth",
+        {
+          fontSize: "13px",
+          fontFamily: "PressStart2P",
+          color: "#ffffff",
+          backgroundColor: "#000000",
+          padding: { x: 10, y: 5 },
+        }
+      )
       //.setOrigin(0.5)
       .setVisible(false);
+  }
+
+  spawnBluemeth(): void {
+    // Crea la chiave sopra la piattaforma scelta
+    this._bluemeth = this.physics.add
+      .sprite(this._waltMeth.x - 200, this._waltMeth.y - 80, "bluemeth")
+      .setGravityY(0)
+      .setScale(2)
+      .setVisible(false);
+
+    this._bluemethYCoo = this._bluemeth.y;
+    //this._bluemeth.play("bluemeth-anim");
+  }
+
+  bluemethHandle(): void {
+    if (this._bluemeth.visible) {
+      this._bluemeth.destroy();
+      this.events.emit("bluemeth-event", 1);
+      this._bluemethCounter++;
+      console.log("bluemeth presa a:", this._bluemeth.x, this._bluemeth.y);
+      this._useBluemethText = this.add
+        .text(this.game.canvas.width / 2, 150, "PREMI A PER USARE LA METH", {
+          fontFamily: "PressStart2P",
+          fontSize: "32px",
+          stroke: "#000000",
+          strokeThickness: 5,
+        })
+        .setVisible(true)
+        .setOrigin(0.5, 0.5);
+    }
   }
 
   create() {
@@ -122,25 +217,35 @@ export default class testLivello1 extends Phaser.Scene {
     this.add.image(
       this.game.canvas.width / 2,
       this.game.canvas.height / 2,
-      "liv1BG"
+      "liv2BG"
     );
 
     this.creaTerreni();
-    this.setupPorta();
+    this.setupWaltMeth();
     this.creaPiattaforme();
     this.creaPlayer();
 
-    // Interazione tra player e porta
+    this._useBluemethText = this.add
+      .text(this.game.canvas.width / 2, 150, "PREMI A PER USARE LA METH", {
+        fontFamily: "PressStart2P",
+        fontSize: "16px",
+        stroke: "#000000",
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5, 0.5)
+      .setVisible(false);
+
+    // Interazione tra player e waltMeth
     this.physics.add.overlap(
       this._player,
-      this._porta,
+      this._waltMeth,
       () => {
-        if (this._keyCounter == 1) this._portaText.setVisible(true);
-        else if (this._keyCounter == 0) {
-          this._portaText.setText(
-            "... Per aprire\nquesta porta\nserve una chiave!"
-          );
-          this._portaText.setVisible(true);
+        this._waltMethText.setVisible(true);
+        if (this._bluemethCounter == 1) {
+          this._waltMethText
+            .setText("Usa la tua Bluemeth")
+            .setPosition(this._waltMeth.x - 100, this._waltMeth.y - 100);
+          this._waltMethText.setVisible(true);
         }
       },
       null,
@@ -149,35 +254,39 @@ export default class testLivello1 extends Phaser.Scene {
 
     //animazione della chiave
     this.anims.create({
-      key: "key-anim",
+      key: "bluemeth-anim",
       frames: this.anims.generateFrameNumbers("chiave", { start: 0, end: 23 }), // 24 frame
       frameRate: 10,
       repeat: -1,
     });
 
-    this.spawnChiave();
+    this.spawnBluemeth();
 
     // Aggiungi un tween per far fluttuare la chiave
     this.tweens.add({
-      targets: this._key,
-      y: { from: this._keyYCoo, to: this._keyYCoo + 10 }, // Movimento verticale di 10 pixel
+      targets: this._bluemeth,
+      y: { from: this._bluemethYCoo, to: this._bluemethYCoo + 10 }, // Movimento verticale di 10 pixel
       //duration: 1000, // Durata del movimento (1 secondo)
       yoyo: true, // Torna indietro
       repeat: -1, // Ripeti all'infinito
       ease: "Sine.easeInOut", // Movimento fluido
       onUpdate: () => {
-        if (this._key.active) this._key.setVelocityY(0); // Blocca la chiave in posizione
+        if (this._bluemeth.active) this._bluemeth.setVelocityY(0); // Blocca la chiave in posizione
       },
     });
 
     // Aggiungi interazione tra player e chiave
     this.physics.add.overlap(
       this._player,
-      this._key,
+      this._bluemeth,
       () => {
-        this._key.destroy();
-        this.events.emit("key-event", 1);
-        this._keyCounter++;
+        if (this._bluemeth.visible) {
+          this._bluemeth.destroy();
+          this.events.emit("bluemeth-event", 1);
+          this._bluemethCounter++;
+          console.log("bluemeth presa a:", this._bluemeth.x, this._bluemeth.y);
+          //this._useBluemethText.setVisible(true);
+        }
       },
       null,
       this
@@ -185,7 +294,7 @@ export default class testLivello1 extends Phaser.Scene {
 
     // Abilitiamo le collisioni di player e chiave, con piattaforme e terreni
     this._activeCollider = this.physics.add.collider(
-      [this._player, this._key],
+      [this._player, this._bluemeth],
       [this._terreni, this._piattaforme]
     );
 
@@ -217,22 +326,43 @@ export default class testLivello1 extends Phaser.Scene {
       Phaser.Math.Distance.Between(
         this._player.x,
         this._player.y,
-        this._porta.x,
-        this._porta.y
+        this._waltMeth.x,
+        this._waltMeth.y
       ) > 50
     ) {
-      this._portaText.setVisible(false);
+      this._waltMethText.setVisible(false);
+    }
+
+    if (this._bluemethCounter == 1) {
+      //this._useBluemethText.visible &&
+
+      this._useBluemethText
+        .setVisible(true)
+        .setPosition(this._player.x, this._player.y - 90);
     }
 
     if (
-      this._portaText.visible &&
-      this.input.keyboard.checkDown(this.input.keyboard.addKey("A"), 250) &&
-      this._keyCounter == 1
+      this._useBluemethText.visible &&
+      this._bluemethCounter == 1 &&
+      this.input.keyboard.checkDown(this.input.keyboard.addKey("A"))
     ) {
-      console.log("porta aperta");
       this.cameras.main.flash(1000, 255, 255, 255);
-      this._keyCounter--;
-      this.events.emit("key-event", -1);
+      this._bluemethCounter--;
+      this._useBluemethText.setVisible(false);
+      //this.events.emit("key-event", -1);
+      //this.scene.start("testLivello1"); // Cambia con la tua prossima scena
+    }
+
+    if (
+      this._waltMethText.visible &&
+      this.input.keyboard.checkDown(this.input.keyboard.addKey("A"), 250) &&
+      this._bluemethCounter == 0
+    ) {
+      console.log("waltMeth A premuto senza bluemeth");
+      this._bluemeth.setVisible(true);
+      //this.cameras.main.flash(1000, 255, 255, 255);
+      //this._bluemethCounter--;
+      //this.events.emit("bluemeth-event", -1);
       //this.scene.start("nextLevelScene"); // Cambia con la tua prossima scena
     }
   }

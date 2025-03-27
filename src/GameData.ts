@@ -42,12 +42,21 @@ export let GameData: gameData = {
     { name: "Title", path: "assets/images/bg/title_finished.png" },
 
     { name: "introBG", path: "assets/images/bg/introBG.png" },
+    { name: "terrenoBlack", path: "assets/images/livello1/terreno.png" },
 
     //Livello 1
     { name: "liv1BG", path: "assets/images/livello1/Background.png" },
     { name: "terreno", path: "assets/images/livello1/groundGrass.png" },
+
+
     { name: "piattaforma", path: "assets/images/livello1/platform.png" },
     { name: "porta", path: "assets/images/livello1/porta1livello.png" },
+
+    //Livello2
+    { name: "liv2BG", path: "assets/images/livello2/2livello.png"},
+    { name: "piattaforma2", path: "assets/images/livello2/platformLab.png"},
+    { name: "bluemeth", path: "assets/images/objects/bluemeth.png" },
+    { name: "waltMeth", path: "assets/images/livello2/walt&meth.png"}
 
     // { name: "liv2BG", path: "assets\images\bg\liv2BG.png" },
 
