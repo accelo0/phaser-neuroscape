@@ -10,6 +10,9 @@ import GameOver from "./scenes/GameOver";
 import Intro from "./scenes/Intro";
 import Stem from "./scenes/Stem";
 import Livello1 from "./scenes/Livello1";
+import Crediti from "./scenes/Crediti";
+
+
 
 import testLivello1 from "./scenes/test/newLiv1";
 
@@ -43,6 +46,8 @@ window.addEventListener("load", () => {
       GameOver,
       Stem,
       Livello1,
+      Crediti,
+
 
       testLivello1,
     ],

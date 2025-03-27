@@ -69,13 +69,11 @@ export let GameData: gameData = {
   ],
   atlas: [],
   sounds: [
-    /*{
-    name: "music",
-    paths: ["assets/sounds/intro.ogg", "assets/sounds/intro.m4a"],
-    volume: 1,
-    loop: true,
-    frame: 1,
-  }*/
+    {
+    name: "IntroGame",
+    paths: ["assets/sounds/intro_gioco.ogg"], //"assets/sounds/intro.m4a"],
+    
+  }
   ],
 
   videos: [
