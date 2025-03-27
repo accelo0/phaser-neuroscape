@@ -233,7 +233,8 @@ export default class Livello1 extends Phaser.Scene {
       this.cameras.main.flash(1000, 255, 255, 255);
       this._keyCounter--;
       this.events.emit("key-event", -1);
-      this.scene.start("testLivello1"); // Cambia con la tua prossima scena
+      this.scene.stop("Livello1");
+      this.scene.start("Livello2"); // Cambia con la tua prossima scena
     }
   }
 }

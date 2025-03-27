@@ -12,8 +12,8 @@ export default class Intro extends Phaser.Scene {
 
   preload() {
     // Load assets
-    this.load.image("introBG", "path/to/introBG.png");
-    this.load.image("Title", "path/to/title_finished.png");
+    //this.load.image("introBG", "path/to/introBG.png");
+    //this.load.image("Title", "path/to/title_finished.png");
     //this.load.audio("intro_gioco", "path/to/intro_gioco.ogg");
   }
 
@@ -33,11 +33,9 @@ export default class Intro extends Phaser.Scene {
     );
 
     // Add title image, positioned slightly higher and to the right
-    this._title = this.add.image(
-      this.scale.width / 2 + 25,
-      this.scale.height / 2 - 90,
-      "Title"
-    );
+    this._title = this.add
+      .image(this.scale.width / 2 + 25, 250, "Title")
+      .setScale(1.3);
 
     // Button positioning
     const centerX = this.scale.width / 2;
@@ -46,44 +44,47 @@ export default class Intro extends Phaser.Scene {
     const startY = centerY - buttonSpacing;
 
     //Create buttons
-    this._giocaButton = this.createButton(centerX, startY, "Gioca", () => {
+    this._giocaButton = this.createButton(centerX, startY, "GIOCA", () => {
       this.scene.start("Livello1");
       this.scene.start("Hud");
-        //porto la scena HUD in primo piano
-        this.scene.bringToTop("Hud");
-    }); 
+      //porto la scena HUD in primo piano
+      this.scene.bringToTop("Hud");
+    });
 
     this._creditiButton = this.createButton(
       centerX,
       startY + buttonSpacing,
-      "Crediti",
+      "CREDITI",
       () => {
         this.scene.stop("Intro");
         //this.scene.start("Livello1");
         this.scene.start("Crediti");
         //faccio partire la scena HUD
-        
-      },
-      
+      }
     );
 
     this._storiaButton = this.createButton(
       centerX,
       startY + 2 * buttonSpacing,
-      "Storia", // Fixed from "STEM" if it was a mistake
+      "STORIA", // Fixed from "STEM" if it was a mistake
       () => {
         this.scene.start("Storia");
       }
     );
   }
 
-  private createButton(x: number, y: number, label: string, callback: () => void) {
+  private createButton(
+    x: number,
+    y: number,
+    label: string,
+    callback: () => void
+  ) {
     const button = this.add
       .text(x, y, label, {
         fontSize: "50px",
         fontFamily: "PressStart2P",
         stroke: "#000000",
-        strokeThickness: 4,
+        strokeThickness: 2,
       })
       .setOrigin(0.5)
       .setInteractive()
@@ -91,7 +92,7 @@ export default class Intro extends Phaser.Scene {
 
     return button;
   }
-/* 
+  /* 
   private startGame() {
     this.scene.stop("Intro");
     this.scene.start("Livello1");

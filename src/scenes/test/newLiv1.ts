@@ -92,11 +92,13 @@ export default class testLivello1 extends Phaser.Scene {
 
     // Create platforms for group 1
     group1Platforms.forEach((obj) => {
-      const platform = this._piattaformeGruppo1.create(
-        obj.x,
-        obj.y,
-        "piattaforma2"
-      );
+      const platform = this._piattaformeGruppo1
+        .create(obj.x, obj.y, "piattaforma2")
+        .setScale(1.3);
+      //.setOrigin(0, 0.5);
+      (
+        platform.body as Phaser.Physics.Arcade.StaticBody
+      ).updateFromGameObject();
       (platform.body as Phaser.Physics.Arcade.StaticBody).checkCollision.down =
         false;
       (platform.body as Phaser.Physics.Arcade.StaticBody).checkCollision.left =
