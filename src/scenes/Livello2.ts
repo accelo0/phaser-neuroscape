@@ -5,13 +5,12 @@ import Player from "./player/Player";
 export default class Livello2 extends Phaser.Scene {
   private _terreni: Phaser.Physics.Arcade.StaticGroup;
   private _piattaforme: Phaser.Physics.Arcade.StaticGroup;
-  private _player: Player; // Cambiato il tipo
+  private _player: Player;
 
   private _cursors: Phaser.Types.Input.Keyboard.CursorKeys;
 
   private _bluemeth: Phaser.Physics.Arcade.Sprite;
   private _bluemethCounter: number = 0;
-  private _bluemethYCoo: number;
 
   private _waltMethText: Phaser.GameObjects.Text;
   private _waltMeth: Phaser.Physics.Arcade.Sprite;
@@ -22,7 +21,6 @@ export default class Livello2 extends Phaser.Scene {
 
   private _piattaformeGruppo1: Phaser.Physics.Arcade.StaticGroup;
   private _piattaformeGruppo2: Phaser.Physics.Arcade.StaticGroup;
-  private _switchTimer: number = 3000; // 3 seconds between switches
 
   constructor() {
     super({ key: "Livello2" });
@@ -33,10 +31,12 @@ export default class Livello2 extends Phaser.Scene {
       "mappa",
       "assets/images/livello1/livello1map.json"
     );
+    this.load.video("meth_effect", "assets/videos/meth_effect.mp4");
+    this.load.image("terreno", "assets/images/terreno.png");
+    this.load.image("player", "assets/images/player.png");
   }
 
   creaTerreni(): void {
-    // **Creazione del terreno con collisioni corrette**
     this._terreni = this.physics.add.staticGroup();
 
     this._terreni
@@ -51,7 +51,6 @@ export default class Livello2 extends Phaser.Scene {
       .setOrigin(0.5, 1)
       .setTint(0x000000);
 
-    // Jump-through platform
     (secondFloor.body as Phaser.Physics.Arcade.StaticBody)
       .setSize(1280, 40)
       .setOffset(0, 12).checkCollision.down = false;
@@ -70,32 +69,25 @@ export default class Livello2 extends Phaser.Scene {
   creaPiattaforme(): void {
     const map = this.make.tilemap({ key: "mappa" });
 
-    // Create two static groups for platforms
     this._piattaformeGruppo1 = this.physics.add.staticGroup();
     this._piattaformeGruppo2 = this.physics.add.staticGroup();
     this._piattaforme = this.physics.add.staticGroup();
 
-    // Get all platform objects from the map
     const piattaformeObjects = map.getObjectLayer("Collisioni").objects;
 
-    // Shuffle the platforms array
     const shuffledPlatforms = [...piattaformeObjects].sort(
       () => Math.random() - 0.5
     );
 
-    // Calculate the midpoint
     const midPoint = Math.floor(shuffledPlatforms.length / 2);
 
-    // Split platforms into two groups
     const group1Platforms = shuffledPlatforms.slice(0, midPoint);
     const group2Platforms = shuffledPlatforms.slice(midPoint);
 
-    // Create platforms for group 1
     group1Platforms.forEach((obj) => {
       const platform = this._piattaformeGruppo1
         .create(obj.x, obj.y, "piattaforma2")
         .setScale(1.3);
-      //.setOrigin(0, 0.5);
       (
         platform.body as Phaser.Physics.Arcade.StaticBody
       ).updateFromGameObject();
@@ -107,7 +99,6 @@ export default class Livello2 extends Phaser.Scene {
         false;
     });
 
-    // Create platforms for group 2
     group2Platforms.forEach((obj) => {
       const platform = this._piattaformeGruppo2.create(
         obj.x,
@@ -122,21 +113,17 @@ export default class Livello2 extends Phaser.Scene {
         false;
     });
 
-    // Initially hide group 2
     this._piattaformeGruppo2.getChildren().forEach((platform) => {
       (platform as Phaser.Physics.Arcade.Sprite).setVisible(false);
-      //(platform.body as Phaser.Physics.Arcade.StaticBody).enable = false;
     });
 
-    // Set up the alternating timer
     this.time.addEvent({
-      delay: this._switchTimer,
+      delay: 3000,
       callback: this.switchPlatformGroups,
       callbackScope: this,
       loop: true,
     });
 
-    // Add both groups to the main platforms group for collision handling
     this._piattaforme.addMultiple(this._piattaformeGruppo1.getChildren());
     this._piattaforme.addMultiple(this._piattaformeGruppo2.getChildren());
   }
@@ -145,16 +132,13 @@ export default class Livello2 extends Phaser.Scene {
     this._piattaformeGruppo1.getChildren().forEach((platform) => {
       const isVisible = (platform as Phaser.Physics.Arcade.Sprite).visible;
       (platform as Phaser.Physics.Arcade.Sprite).setVisible(!isVisible);
-      //(platform.body as Phaser.Physics.Arcade.StaticBody).enable = !isVisible;
     });
 
     this._piattaformeGruppo2.getChildren().forEach((platform) => {
       const isVisible = (platform as Phaser.Physics.Arcade.Sprite).visible;
       (platform as Phaser.Physics.Arcade.Sprite).setVisible(!isVisible);
-      //(platform.body as Phaser.Physics.Arcade.StaticBody).enable = !isVisible;
     });
 
-    // Optional: Add a flash effect when platforms switch
     this.cameras.main.flash(
       150,
       Math.floor(Math.random() * 256),
@@ -185,39 +169,15 @@ export default class Livello2 extends Phaser.Scene {
           padding: { x: 10, y: 5 },
         }
       )
-      //.setOrigin(0.5)
       .setVisible(false);
   }
 
   spawnBluemeth(): void {
-    // Crea la chiave sopra la piattaforma scelta
     this._bluemeth = this.physics.add
       .sprite(this._waltMeth.x - 200, this._waltMeth.y - 80, "bluemeth")
       .setGravityY(0)
       .setScale(2)
       .setVisible(false);
-
-    this._bluemethYCoo = this._bluemeth.y;
-    //this._bluemeth.play("bluemeth-anim");
-  }
-
-  bluemethHandle(): void {
-    if (this._bluemeth.visible) {
-      this._bluemeth.destroy();
-      this.events.emit("bluemeth-event", 1);
-      this._bluemethCounter++;
-      console.log("bluemeth presa a:", this._bluemeth.x, this._bluemeth.y);
-      //testo di uso bluemeth che segue il player
-      this._useBluemethText = this.add
-        .text(this.game.canvas.width / 2, 150, "PREMI A PER USARE LA METH", {
-          fontFamily: "PressStart2P",
-          fontSize: "32px",
-          stroke: "#000000",
-          strokeThickness: 5,
-        })
-        .setVisible(true)
-        .setOrigin(0.5, 0.5);
-    }
   }
 
   create() {
@@ -235,16 +195,14 @@ export default class Livello2 extends Phaser.Scene {
     this.creaPlayer();
 
     this._useBluemethText = this.add
-      .text(this.game.canvas.width / 2, 150, "PREMI A PER USARE LA METH", {
-        fontFamily: "PressStart2P",
-        fontSize: "16px",
-        stroke: "#000000",
-        strokeThickness: 5,
-      })
-      .setOrigin(0.5, 0.5)
-      .setVisible(false);
-
-    // Interazione tra player e waltMeth
+    .text(this.game.canvas.width / 2, 150, "PREMI A PER USARE LA METH", {
+      fontFamily: "PressStart2P",
+      fontSize: "16px",
+      stroke: "#000000",
+      strokeThickness: 5,
+    })
+    .setOrigin(0.5, 0.5)
+    .setVisible(false);
     this.physics.add.overlap(
       this._player,
       this._waltMeth,
@@ -261,30 +219,19 @@ export default class Livello2 extends Phaser.Scene {
       this
     );
 
-    //animazione della chiave
-    this.anims.create({
-      key: "bluemeth-anim",
-      frames: this.anims.generateFrameNumbers("chiave", { start: 0, end: 23 }), // 24 frame
-      frameRate: 10,
-      repeat: -1,
-    });
-
     this.spawnBluemeth();
 
-    // Aggiungi un tween per far fluttuare la chiave
     this.tweens.add({
       targets: this._bluemeth,
-      y: { from: this._bluemethYCoo, to: this._bluemethYCoo + 10 }, // Movimento verticale di 10 pixel
-      //duration: 1000, // Durata del movimento (1 secondo)
-      yoyo: true, // Torna indietro
-      repeat: -1, // Ripeti all'infinito
-      ease: "Sine.easeInOut", // Movimento fluido
+      y: { from: this._bluemeth.y, to: this._bluemeth.y + 10 },
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
       onUpdate: () => {
-        if (this._bluemeth.active) this._bluemeth.setVelocityY(0); // Blocca la chiave in posizione
+        if (this._bluemeth.active) this._bluemeth.setVelocityY(0);
       },
     });
 
-    // Aggiungi interazione tra player e chiave
     this.physics.add.overlap(
       this._player,
       this._bluemeth,
@@ -293,21 +240,17 @@ export default class Livello2 extends Phaser.Scene {
           this._bluemeth.destroy();
           this.events.emit("bluemeth-event", 1);
           this._bluemethCounter++;
-          console.log("bluemeth presa a:", this._bluemeth.x, this._bluemeth.y);
-          //this._useBluemethText.setVisible(true);
         }
       },
       null,
       this
     );
 
-    // Abilitiamo le collisioni di player e chiave, con piattaforme e terreni
     this._activeCollider = this.physics.add.collider(
       [this._player, this._bluemeth],
       [this._terreni, this._piattaforme]
     );
 
-    // setup controlli
     this._cursors = this.input.keyboard.createCursorKeys();
   }
 
@@ -343,8 +286,6 @@ export default class Livello2 extends Phaser.Scene {
     }
 
     if (this._bluemethCounter == 1) {
-      //this._useBluemethText.visible &&
-
       this._useBluemethText
         .setVisible(true)
         .setPosition(this._player.x, this._player.y - 90);
@@ -358,8 +299,8 @@ export default class Livello2 extends Phaser.Scene {
       this.cameras.main.flash(1000, 255, 255, 255);
       this._bluemethCounter--;
       this._useBluemethText.setVisible(false);
-      //this.events.emit("key-event", -1);
-      //this.scene.start("testLivello1"); // Cambia con la tua prossima scena
+
+      this.playMethEffectVideo();
     }
 
     if (
@@ -370,7 +311,6 @@ export default class Livello2 extends Phaser.Scene {
       this._waltMethText.setText("La Bluemeth è\nstata spawnata");
     }
 
-    // player su walt e meth con A premuto senza bluemeth
     if (
       this._waltMethText.visible &&
       this.input.keyboard.checkDown(this.input.keyboard.addKey("A"), 250) &&
@@ -378,5 +318,34 @@ export default class Livello2 extends Phaser.Scene {
     ) {
       this._bluemeth.setVisible(true);
     }
+  }
+
+  private playMethEffectVideo(): void {
+    const methEffectVideo = this.add.video(
+      this.scale.width / 2,
+      this.scale.height / 2,
+      "meth_effect"
+    );
+
+   // methEffectVideo.setDisplaySize(1280, 800);
+    methEffectVideo.setOrigin(0.25, 0.25);
+    methEffectVideo.play();
+
+    // Se hai un HUD, nascondilo
+    const hudScene = this.scene.get("Hud"); // Ottieni la scena HUD
+    if (hudScene) {
+        hudScene.scene.setVisible(false); // Nascondi la scena HUD
+    }
+
+    this._player.setVisible(false);
+    this._waltMeth?.setVisible(false);
+    this._bluemeth.setVisible(false);
+    this._useBluemethText.setVisible(false);
+    this._waltMethText.setVisible(false);
+
+    this.time.delayedCall(8000, () => {
+      methEffectVideo.destroy();
+      this.scene.start("Livello3");
+    });
   }
 }

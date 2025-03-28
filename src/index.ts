@@ -16,6 +16,7 @@ import Livello2 from "./scenes/Livello2";
 import Crediti from "./scenes/Crediti";
 
 import testLivello1 from "./scenes/test/newLiv1";
+import Livello3 from "./scenes/Livello3";
 
 //importiamo GameData che contiene i valori globali del gioco
 import { GameData } from "./GameData";
@@ -48,7 +49,9 @@ window.addEventListener("load", () => {
       Stem,
       Livello1,
       Livello2,
+      Livello3,
       Crediti,
+      
 
       testLivello1,
     ],

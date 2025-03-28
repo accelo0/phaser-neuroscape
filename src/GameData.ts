@@ -57,6 +57,8 @@ export let GameData: gameData = {
     { name: "piattaforma2", path: "assets/images/livello2/platformLab.png" },
     { name: "bluemeth", path: "assets/images/objects/bluemeth.png" },
     { name: "waltMeth", path: "assets/images/livello2/walt&meth.png" },
+    {name: "metheffect", path: "assets/video/meth_effect.mp4" },
+    
 
     // { name: "liv2BG", path: "assets\images\bg\liv2BG.png" },
 
