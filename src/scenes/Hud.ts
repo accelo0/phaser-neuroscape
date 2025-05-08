@@ -43,6 +43,12 @@ export default class Hud extends Phaser.Scene {
 
     const keyBonusGroup = this.add.container(0, 50);
 
+    this._livello1.events.on(
+      "level1-finish",
+      () => keyBonusGroup.setVisible(false),
+      this
+    );
+
     // Aggiungi l'icona e testo della chiave
     this._keyBonus = this.add.sprite(0, 0, "chiave").setScale(1.5);
     this._keyBonusText = this.add

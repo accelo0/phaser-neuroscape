@@ -45,7 +45,7 @@ export default class Intro extends Phaser.Scene {
 
     //Create buttons
     this._giocaButton = this.createButton(centerX, startY, "GIOCA", () => {
-      this.scene.start("Livello3");
+      this.scene.start("Livello1");
       this.scene.start("Hud");
       //porto la scena HUD in primo piano
       this.scene.bringToTop("Hud");
